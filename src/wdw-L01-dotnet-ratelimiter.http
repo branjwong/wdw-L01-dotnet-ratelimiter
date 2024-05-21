@@ -1,0 +1,6 @@
+@wdw_L01_dotnet_ratelimiter_HostAddress = http://localhost:5217
+
+GET {{wdw_L01_dotnet_ratelimiter_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
