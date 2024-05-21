@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Mvc;
+[assembly: ApiController]
+
 // using Newtonsoft.Json;
 // IList<Item> config = JsonConvert.DeserializeObject<IList<Item>>(File.ReadAllText(@"config.json"));
 
@@ -7,6 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddControllers();
 
 var app = builder.Build();
 
@@ -39,10 +43,7 @@ app.MapGet("/weatherforecast", () =>
 .WithName("GetWeatherForecast")
 .WithOpenApi();
 
-app.MapPost("/take", () =>
-{
-    return "hi";
-});
+app.MapControllers();
 
 app.Run();
 

@@ -6,5 +6,13 @@ https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-t
 
 ```c#
 dotnet run
-curl http://localhost:5291
+curl http://localhost:5217/take
+```
+
+Browse to http://localhost:5217/swagger/index.html
+
+## Learn
+
+```
+dotnet --info
 ```
