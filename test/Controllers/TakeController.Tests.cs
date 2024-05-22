@@ -6,23 +6,103 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
 using SimpleRateLimiter.Controllers;
+using SimpleRateLimiter.Models;
+using Microsoft.Extensions.Logging;
 
 namespace SimpleRateLimiter.Tests.UnitTests
 {
     public class TakeControllerTests
     {
         [Fact]
-        public async Task Index_ReturnsHi()
+        public async Task Take_Returns400IfRouteMissing()
         {
             // Arrange
-            var controller = new TakeController();
+            var mock = new Mock<ILogger<TakeController>>();
+            ILogger<TakeController> logger = mock.Object;
+
+            var controller = new TakeController(logger);
 
             // Act
-            var result = await controller.Index();
+            var response = await controller.Index(new TakeItem());
 
             // Assert
-            var stringResult = Assert.IsType<Microsoft.AspNetCore.Mvc.ActionResult<string>>(result);
-            Assert.Equal("hi", stringResult.Value);
+            Assert.Equal(400, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task Take_Returns400IfRouteNotFound()
+        {
+            // Arrange
+            var mock = new Mock<ILogger<TakeController>>();
+            ILogger<TakeController> logger = mock.Object;
+
+            var controller = new TakeController(logger);
+
+            // Act
+            var response = await controller.Index(new TakeItem { Endpoint = "GET bad/request/url" });
+
+            // Assert
+            Assert.Equal(400, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task Take_Returns200IfTokensAvailable()
+        {
+            // Arrange
+            var mock = new Mock<ILogger<TakeController>>();
+            ILogger<TakeController> logger = mock.Object;
+
+            var controller = new TakeController(logger);
+
+            // Act
+            var response = await controller.Index(new TakeItem { Endpoint = "GET /user/:id" });
+
+            // Assert
+            Assert.Equal(200, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task Take_Returns429IfNoTokensAvailable()
+        {
+            // Arrange
+            var mock = new Mock<ILogger<TakeController>>();
+            ILogger<TakeController> logger = mock.Object;
+
+            var controller = new TakeController(logger);
+
+            for (int i = 0; i < 10; i++)
+            {
+                await controller.Index(new TakeItem { Endpoint = "GET /user/:id" });
+            }
+
+            // Act
+            var response = await controller.Index(new TakeItem { Endpoint = "GET /user/:id" });
+
+            // Assert
+            Assert.Equal(429, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task Take_Returns400IfClientWaitsUntilTokensAvailable()
+        {
+            // Arrange
+            var mock = new Mock<ILogger<TakeController>>();
+            ILogger<TakeController> logger = mock.Object;
+
+            var controller = new TakeController(logger);
+
+            for (int i = 0; i < 300; i++)
+            {
+                await controller.Index(new TakeItem { Endpoint = "POST /userinfo" });
+            }
+
+            await Task.Run(() => Thread.Sleep(300));
+
+            // Act
+            var response = await controller.Index(new TakeItem { Endpoint = "POST /userinfo" });
+
+            // Assert
+            Assert.Equal(200, response.StatusCode);
         }
     }
 }

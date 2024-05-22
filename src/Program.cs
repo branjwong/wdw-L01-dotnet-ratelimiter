@@ -4,13 +4,21 @@ using Microsoft.AspNetCore.Mvc;
 // using Newtonsoft.Json;
 // IList<Item> config = JsonConvert.DeserializeObject<IList<Item>>(File.ReadAllText(@"config.json"));
 
-var builder = WebApplication.CreateBuilder(args);
+namespace SimpleRateLimiter;
 
-builder.Services.AddControllers();
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
 
-var app = builder.Build();
+        builder.Services.AddControllers();
 
-app.UseHttpsRedirection();
-app.MapControllers();
+        var app = builder.Build();
 
-app.Run();
+        app.UseHttpsRedirection();
+        app.MapControllers();
+
+        app.Run();
+    }
+}
