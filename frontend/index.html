@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Simple Rate Limiter</title>
+</head>
+
+<body>
+    <h1>Welcome to my Simple Rate Limiter</h1>
+
+    <p>Press the buttons below to test the rate limiter.</p>
+
+    <button id="button1">Button 1</button>
+    <button id="button2">Button 2</button>
+    <button id="button3">Button 3</button>
+
+    <br><br>
+
+    <div id="responses"></div>
+</body>
+
+<script>
+    let responses = [];
+    const buttonEls = document.querySelectorAll('button');
+    const responsesEl = document.getElementById('responses');
+
+    buttonEls.forEach(button => {
+        button.addEventListener('click', async () => {
+            const response = await fetch(`http://localhost:5217/take`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ endpoint: button.id })
+            });
+            const data = await response.json();
+            responses.push(data.message);
+            responsesEl.innerHTML = responses.join('<br>');
+        });
+    });
+</script>
+
+</html>

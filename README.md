@@ -4,9 +4,14 @@ https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-t
 
 ## Quickstart
 
-```c#
+```bash
 dotnet run
+
+# THEN
+
 curl http://localhost:5217/take/ -H 'content-type: application/json' -d '{"endpoint":"GET /user/:id"}'
+# OR
+npm start
 ```
 
 Browse to http://localhost:5217/swagger/index.html
