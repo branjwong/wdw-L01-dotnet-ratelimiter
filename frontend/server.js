@@ -8,6 +8,12 @@ app.get('/', function (req, res) {
   });
 });
 
+app.get('/index.css', function (req, res) {
+  res.sendFile('index.css', {
+    root: __dirname
+  });
+});
+
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
