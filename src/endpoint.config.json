@@ -1,0 +1,12 @@
+[
+  {
+    "endpoint": "GET /user/:id",
+    "burst": 10,
+    "sustained": 6
+  },
+  {
+    "endpoint": "POST /userinfo",
+    "burst": 300,
+    "sustained": 60
+  }
+]

@@ -83,7 +83,7 @@ namespace SimpleRateLimiter.Tests.UnitTests
         }
 
         [Fact]
-        public void Take_Returns400IfClientWaitsUntilTokensAvailable()
+        public async Task Take_Returns400IfClientWaitsUntilTokensAvailable()
         {
             // Arrange
             var mock = new Mock<ILogger<TakeController>>();
