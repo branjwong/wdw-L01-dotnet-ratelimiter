@@ -35,7 +35,7 @@
                 body: JSON.stringify({ endpoint: button.id })
             });
             const data = await response.json();
-            responses.push(JSON.stringify(data));
+            responses.unshift(JSON.stringify(data));
             responsesEl.innerHTML = responses.join('<br>');
         });
     });
