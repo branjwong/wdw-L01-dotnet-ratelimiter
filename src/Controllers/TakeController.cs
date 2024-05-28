@@ -1,22 +1,15 @@
 
 using Microsoft.AspNetCore.Mvc;
 using SimpleRateLimiter.Models;
+using SimpleRateLimiter.Services;
 
 namespace SimpleRateLimiter.Controllers
 {
     [Route("api/[controller]")]
-    public class TakeController : ControllerBase
+    public class TakeController(ILogger<TakeController> logger, IBucketManager bucketManager) : ControllerBase
     {
-        private readonly ILogger _logger;
-
-        // TODO: Refactor to use TokenManager.cs
-        private readonly BucketContext _context;
-
-        public TakeController(ILogger<TakeController> logger, BucketContext context)
-        {
-            _logger = logger;
-            _context = context;
-        }
+        private readonly ILogger _logger = logger;
+        private readonly IBucketManager _bucketManager = bucketManager;
 
         // POST: api/Take
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
@@ -31,7 +24,7 @@ namespace SimpleRateLimiter.Controllers
                 return BadRequest(ModelState);
             }
 
-            var endpointBucket = await _context.EndpointBuckets.FindAsync(takeItem.Endpoint);
+            var endpointBucket = await _bucketManager.GetBucket(takeItem.Endpoint);
 
             if (endpointBucket == null)
             {
@@ -42,8 +35,7 @@ namespace SimpleRateLimiter.Controllers
             var tokens = endpointBucket.Tokens;
             if (tokens >= 1)
             {
-                endpointBucket.Tokens = tokens - 1;
-                await _context.SaveChangesAsync();
+                await _bucketManager.TakeFromBucket(takeItem.Endpoint);
                 _logger.LogError("Token taken for endpoint {Endpoint}", takeItem.Endpoint);
                 return StatusCode(200, new { message = "Token taken", tokensAvailable = endpointBucket.Tokens });
             }

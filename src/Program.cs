@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SimpleRateLimiter.Models;
+using SimpleRateLimiter.Services;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 [assembly: ApiController]
@@ -31,6 +32,8 @@ public class Program
         });
 
         InitializeDatabase();
+
+        builder.Services.AddScoped<IBucketManager, BucketManager>();
 
         var app = builder.Build();
 

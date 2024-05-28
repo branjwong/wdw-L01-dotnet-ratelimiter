@@ -3,6 +3,7 @@ using SimpleRateLimiter.Controllers;
 using SimpleRateLimiter.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
+using SimpleRateLimiter.Services;
 
 namespace SimpleRateLimiter.Tests.UnitTests
 {
@@ -88,7 +89,7 @@ namespace SimpleRateLimiter.Tests.UnitTests
 
     public class Setup
     {
-        public BucketContext context;
+        public IBucketManager bucketManager;
         public ILogger<TakeController> logger;
 
         public Setup()
@@ -100,16 +101,18 @@ namespace SimpleRateLimiter.Tests.UnitTests
                 .UseInMemoryDatabase(databaseName: "Test")
                 .Options;
 
-            context = new BucketContext(options);
+            var context = new BucketContext(options);
             context.Database.EnsureDeleted();
             context.EndpointBuckets.Add(new EndpointBucket { Endpoint = "GET /user/:id", Tokens = 10 });
             context.EndpointBuckets.Add(new EndpointBucket { Endpoint = "POST /userinfo", Tokens = 1 });
             context.SaveChanges();
+
+            bucketManager = new BucketManager(context);
         }
 
         public TakeController CreateController()
         {
-            return new TakeController(logger, context);
+            return new TakeController(logger, bucketManager);
         }
     }
 }
