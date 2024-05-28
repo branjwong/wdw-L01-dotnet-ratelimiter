@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace SimpleRateLimiter;
 
-public class Program
+public partial class Program
 {
     public static void Main(string[] args)
     {
@@ -34,6 +34,7 @@ public class Program
         InitializeDatabase();
 
         builder.Services.AddScoped<IBucketManager, BucketManager>();
+        builder.Services.AddHostedService<TokenTimer>();
 
         var app = builder.Build();
 

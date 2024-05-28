@@ -20,7 +20,7 @@ namespace SimpleRateLimiter.Controllers
 
             if (!ModelState.IsValid)
             {
-                _logger.LogError("Model state invalid for endpoint {Endpoint}", takeItem.Endpoint);
+                _logger.LogInformation("Model state invalid for endpoint {Endpoint}", takeItem.Endpoint);
                 return BadRequest(ModelState);
             }
 
@@ -28,7 +28,7 @@ namespace SimpleRateLimiter.Controllers
 
             if (endpointBucket == null)
             {
-                _logger.LogError("Endpoint not found: {Endpoint}", takeItem.Endpoint);
+                _logger.LogInformation("Endpoint not found: {Endpoint}", takeItem.Endpoint);
                 return StatusCode(400, new { message = "Endpoint not found in config" });
             }
 
@@ -36,13 +36,13 @@ namespace SimpleRateLimiter.Controllers
             if (tokens >= 1)
             {
                 await _bucketManager.TakeFromBucket(takeItem.Endpoint);
-                _logger.LogError("Token taken for endpoint {Endpoint}", takeItem.Endpoint);
+                _logger.LogInformation("Token taken for endpoint {Endpoint}", takeItem.Endpoint);
                 return StatusCode(200, new { message = "Token taken", tokensAvailable = endpointBucket.Tokens });
             }
             else
             {
-                _logger.LogError("No tokens available for endpoint {Endpoint}", takeItem.Endpoint);
-                return StatusCode(429, new { message = "Rate limit exceeded", tokensAvailable = 0 });
+                _logger.LogWarning("No tokens available for endpoint {Endpoint}", takeItem.Endpoint);
+                return StatusCode(429, new { message = "Rate limit exceeded", tokensAvailable = endpointBucket.Tokens });
             }
         }
     }

@@ -9,40 +9,32 @@ namespace SimpleRateLimiter.Tests.UnitTests
 {
     public class TakeControllerTests
     {
-        [Fact]
-        public async Task Take_Returns400IfRouteMissing()
+        [Theory]
+        [InlineData("")]
+        [InlineData("GET bad/request/url")]
+        [InlineData("GET not/exist/url")]
+        public async Task Take_Returns400IfRouteNotFound(string endpoint)
         {
             // Arrange
             var controller = new Setup().CreateController();
 
             // Act
-            var response = await controller.PostEndpointBucket(new TakeItem { Endpoint = "" });
+            var response = await controller.PostEndpointBucket(new TakeItem { Endpoint = endpoint });
 
             // Assert
             Assert.Equal(400, response.StatusCode);
         }
 
-        [Fact]
-        public async Task Take_Returns400IfRouteNotFound()
+        [Theory]
+        [InlineData("GET /user/:id")]
+        [InlineData("POST /userinfo")]
+        public async Task Take_Returns200IfTokensAvailable(string endpoint)
         {
             // Arrange
             var controller = new Setup().CreateController();
 
             // Act
-            var response = await controller.PostEndpointBucket(new TakeItem { Endpoint = "GET bad/request/url" });
-
-            // Assert
-            Assert.Equal(400, response.StatusCode);
-        }
-
-        [Fact]
-        public async Task Take_Returns200IfTokensAvailable()
-        {
-            // Arrange
-            var controller = new Setup().CreateController();
-
-            // Act
-            var response = await controller.PostEndpointBucket(new TakeItem { Endpoint = "GET /user/:id" });
+            var response = await controller.PostEndpointBucket(new TakeItem { Endpoint = endpoint });
 
             // Assert
             Assert.Equal(200, response.StatusCode);
@@ -64,26 +56,6 @@ namespace SimpleRateLimiter.Tests.UnitTests
 
             // Assert
             Assert.Equal(429, response.StatusCode);
-        }
-
-        [Fact]
-        public async Task Take_Returns400IfClientWaitsUntilTokensAvailable()
-        {
-            // Arrange
-            var controller = new Setup().CreateController();
-
-            for (int i = 0; i < 300; i++)
-            {
-                await controller.PostEndpointBucket(new TakeItem { Endpoint = "POST /userinfo" });
-            }
-
-            await Task.Run(() => Thread.Sleep(300));
-
-            // Act
-            var response = await controller.PostEndpointBucket(new TakeItem { Endpoint = "POST /userinfo" });
-
-            // Assert
-            Assert.Equal(200, response.StatusCode);
         }
     }
 

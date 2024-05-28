@@ -6,6 +6,6 @@ namespace SimpleRateLimiter.Models
     {
         public required string Endpoint { get; set; }
         public int Burst { get; set; }
-        public int Sustained { get; set; }
+        public decimal Sustained { get; set; }
     }
 }
