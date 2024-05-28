@@ -2,75 +2,64 @@ using Moq;
 using SimpleRateLimiter.Controllers;
 using SimpleRateLimiter.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 
 namespace SimpleRateLimiter.Tests.UnitTests
 {
     public class TakeControllerTests
     {
         [Fact]
-        public void Take_Returns400IfRouteMissing()
+        public async Task Take_Returns400IfRouteMissing()
         {
             // Arrange
-            var mock = new Mock<ILogger<TakeController>>();
-            ILogger<TakeController> logger = mock.Object;
-
-            var controller = new TakeController(logger);
+            var controller = new Setup().CreateController();
 
             // Act
-            var response = controller.Index(new TakeItem { Endpoint = "" });
+            var response = await controller.PostEndpointBucket(new TakeItem { Endpoint = "" });
 
             // Assert
             Assert.Equal(400, response.StatusCode);
         }
 
         [Fact]
-        public void Take_Returns400IfRouteNotFound()
+        public async Task Take_Returns400IfRouteNotFound()
         {
             // Arrange
-            var mock = new Mock<ILogger<TakeController>>();
-            ILogger<TakeController> logger = mock.Object;
-
-            var controller = new TakeController(logger);
+            var controller = new Setup().CreateController();
 
             // Act
-            var response = controller.Index(new TakeItem { Endpoint = "GET bad/request/url" });
+            var response = await controller.PostEndpointBucket(new TakeItem { Endpoint = "GET bad/request/url" });
 
             // Assert
             Assert.Equal(400, response.StatusCode);
         }
 
         [Fact]
-        public void Take_Returns200IfTokensAvailable()
+        public async Task Take_Returns200IfTokensAvailable()
         {
             // Arrange
-            var mock = new Mock<ILogger<TakeController>>();
-            ILogger<TakeController> logger = mock.Object;
-
-            var controller = new TakeController(logger);
+            var controller = new Setup().CreateController();
 
             // Act
-            var response = controller.Index(new TakeItem { Endpoint = "GET /user/:id" });
+            var response = await controller.PostEndpointBucket(new TakeItem { Endpoint = "GET /user/:id" });
 
             // Assert
             Assert.Equal(200, response.StatusCode);
         }
 
         [Fact]
-        public void Take_Returns429IfNoTokensAvailable()
+        public async Task Take_Returns429IfNoTokensAvailable()
         {
             // Arrange
-            var mock = new Mock<ILogger<TakeController>>();
-            ILogger<TakeController> logger = mock.Object;
-
-            var controller = new TakeController(logger);
+            var controller = new Setup().CreateController();
 
             for (int i = 0; i < 10; i++)
             {
-                controller.Index(new TakeItem { Endpoint = "GET /user/:id" });
+                await controller.PostEndpointBucket(new TakeItem { Endpoint = "GET /user/:id" });
             }
 
             // Act
-            var response = controller.Index(new TakeItem { Endpoint = "GET /user/:id" });
+            var response = await controller.PostEndpointBucket(new TakeItem { Endpoint = "GET /user/:id" });
 
             // Assert
             Assert.Equal(429, response.StatusCode);
@@ -80,23 +69,47 @@ namespace SimpleRateLimiter.Tests.UnitTests
         public async Task Take_Returns400IfClientWaitsUntilTokensAvailable()
         {
             // Arrange
-            var mock = new Mock<ILogger<TakeController>>();
-            ILogger<TakeController> logger = mock.Object;
-
-            var controller = new TakeController(logger);
+            var controller = new Setup().CreateController();
 
             for (int i = 0; i < 300; i++)
             {
-                controller.Index(new TakeItem { Endpoint = "POST /userinfo" });
+                await controller.PostEndpointBucket(new TakeItem { Endpoint = "POST /userinfo" });
             }
 
             await Task.Run(() => Thread.Sleep(300));
 
             // Act
-            var response = controller.Index(new TakeItem { Endpoint = "POST /userinfo" });
+            var response = await controller.PostEndpointBucket(new TakeItem { Endpoint = "POST /userinfo" });
 
             // Assert
             Assert.Equal(200, response.StatusCode);
+        }
+    }
+
+    public class Setup
+    {
+        public BucketContext context;
+        public ILogger<TakeController> logger;
+
+        public Setup()
+        {
+            var mock = new Mock<ILogger<TakeController>>();
+            logger = mock.Object;
+
+            var options = new DbContextOptionsBuilder<BucketContext>()
+                .UseInMemoryDatabase(databaseName: "Test")
+                .Options;
+
+            context = new BucketContext(options);
+            context.Database.EnsureDeleted();
+            context.EndpointBuckets.Add(new EndpointBucket { Endpoint = "GET /user/:id", Tokens = 10 });
+            context.EndpointBuckets.Add(new EndpointBucket { Endpoint = "POST /userinfo", Tokens = 1 });
+            context.SaveChanges();
+        }
+
+        public TakeController CreateController()
+        {
+            return new TakeController(logger, context);
         }
     }
 }

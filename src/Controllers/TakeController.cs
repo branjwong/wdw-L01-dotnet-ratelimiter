@@ -1,35 +1,27 @@
+
 using Microsoft.AspNetCore.Mvc;
 using SimpleRateLimiter.Models;
-using Newtonsoft.Json;
 
 namespace SimpleRateLimiter.Controllers
 {
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class TakeController : ControllerBase
     {
         private readonly ILogger _logger;
-        private readonly IList<EndpointConfig>? _config;
 
-        private readonly IDictionary<string, decimal> _buckets = new Dictionary<string, decimal>();
+        // TODO: Refactor to use TokenManager.cs
+        private readonly BucketContext _context;
 
-        public TakeController(ILogger<TakeController> logger)
+        public TakeController(ILogger<TakeController> logger, BucketContext context)
         {
             _logger = logger;
-            _config = JsonConvert.DeserializeObject<IList<EndpointConfig>>(System.IO.File.ReadAllText(@"endpoint.config.json"));
-
-            if (_config != null)
-            {
-                foreach (var endpoint in _config)
-                {
-                    _logger.LogInformation("Loaded config: {Endpoint}: burst={Burst}, sustained={Sustained}", endpoint.Endpoint, endpoint.Burst, endpoint.Sustained);
-
-                    _buckets.Add(endpoint.Endpoint, endpoint.Burst);
-                }
-            }
+            _context = context;
         }
 
+        // POST: api/Take
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public ObjectResult Index(TakeItem takeItem)
+        public async Task<ObjectResult> PostEndpointBucket(TakeItem takeItem)
         {
             _logger.LogInformation("Received request to take token from endpoint {Endpoint}", takeItem.Endpoint);
 
@@ -39,18 +31,21 @@ namespace SimpleRateLimiter.Controllers
                 return BadRequest(ModelState);
             }
 
-            if (!_buckets.ContainsKey(takeItem.Endpoint))
+            var endpointBucket = await _context.EndpointBuckets.FindAsync(takeItem.Endpoint);
+
+            if (endpointBucket == null)
             {
-                _logger.LogError("Endpoint not found in config: {Endpoint}", takeItem.Endpoint);
+                _logger.LogError("Endpoint not found: {Endpoint}", takeItem.Endpoint);
                 return StatusCode(400, new { message = "Endpoint not found in config" });
             }
 
-            var tokens = _buckets[takeItem.Endpoint];
+            var tokens = endpointBucket.Tokens;
             if (tokens >= 1)
             {
-                _buckets[takeItem.Endpoint] = tokens - 1;
+                endpointBucket.Tokens = tokens - 1;
+                await _context.SaveChangesAsync();
                 _logger.LogError("Token taken for endpoint {Endpoint}", takeItem.Endpoint);
-                return StatusCode(200, new { message = "Token taken", tokensAvailable = _buckets[takeItem.Endpoint] });
+                return StatusCode(200, new { message = "Token taken", tokensAvailable = endpointBucket.Tokens });
             }
             else
             {

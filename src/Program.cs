@@ -1,4 +1,7 @@
+using Microsoft.EntityFrameworkCore;
+using SimpleRateLimiter.Models;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 [assembly: ApiController]
 
 namespace SimpleRateLimiter;
@@ -11,7 +14,9 @@ public class Program
         var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
         builder.Services.AddControllers();
-        // todo: persist controllers
+
+        builder.Services.AddDbContext<BucketContext>(opt =>
+            opt.UseInMemoryDatabase("EndpointBucket"));
 
         builder.Services.AddCors(options =>
         {
@@ -25,11 +30,34 @@ public class Program
             });
         });
 
+        InitializeDatabase();
+
         var app = builder.Build();
 
         app.UseCors(MyAllowSpecificOrigins);
         app.MapControllers();
 
         app.Run();
+    }
+
+    public static void InitializeDatabase()
+    {
+        var options = new DbContextOptionsBuilder<BucketContext>()
+                    .UseInMemoryDatabase(databaseName: "EndpointBucket")
+                    .Options;
+
+        var config = JsonConvert.DeserializeObject<IList<EndpointConfig>>(File.ReadAllText(@"endpoint.config.json"));
+
+        if (config != null)
+        {
+            var context = new BucketContext(options);
+            context.Database.EnsureDeleted();
+            foreach (var endpoint in config)
+            {
+                context.EndpointBuckets.Add(new EndpointBucket { Endpoint = endpoint.Endpoint, Tokens = endpoint.Burst });
+            }
+
+            context.SaveChanges();
+        }
     }
 }

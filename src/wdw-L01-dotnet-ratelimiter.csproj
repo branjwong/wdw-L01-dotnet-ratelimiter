@@ -4,7 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>wdw_L01_dotnet_ratelimiter</RootNamespace>
+    <RootNamespace>SimpleRateLimiter</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,6 +14,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.6" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.5" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.5">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -25,7 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="endpoint.config.json"/>
+    <Reference Include="endpoint.config.json" />
   </ItemGroup>
 
 </Project>

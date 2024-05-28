@@ -11,9 +11,9 @@
 
     <p>Press the buttons below to test the rate limiter.</p>
 
-    <button id="button1">Button 1</button>
-    <button id="button2">Button 2</button>
-    <button id="button3">Button 3</button>
+    <button id="GET /user/:id">GET /user/:id</button>
+    <button id="POST /userinfo">POST /userinfo</button>
+    <button id="GET bad/request/url">GET bad/request/url</button>
 
     <br><br>
 
@@ -27,7 +27,7 @@
 
     buttonEls.forEach(button => {
         button.addEventListener('click', async () => {
-            const response = await fetch(`http://localhost:5217/take`, {
+            const response = await fetch(`http://localhost:5217/api/take`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -35,7 +35,7 @@
                 body: JSON.stringify({ endpoint: button.id })
             });
             const data = await response.json();
-            responses.push(data.message);
+            responses.push(JSON.stringify(data));
             responsesEl.innerHTML = responses.join('<br>');
         });
     });
